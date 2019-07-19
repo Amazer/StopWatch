@@ -2,7 +2,6 @@
 Apps
 Library
 Temp
-Temp/*
 *.exe
 *.csproj
 *.sln
