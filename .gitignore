@@ -1,0 +1,8 @@
+.vs
+Apps
+Library
+Temp
+*.exe
+*.csproj
+*.sln
+
