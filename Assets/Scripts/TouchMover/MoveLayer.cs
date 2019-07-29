@@ -33,7 +33,7 @@ namespace StopWatch
             hw = rt.sizeDelta.x * 0.5f;
             posX = rt.localPosition.x;
             origPos = rt.localPosition;
-            float deltaSize = hw - 360;// 假设屏幕宽度是720
+            float deltaSize = hw - 360;// 假设UGUI设置的Resolution是720*1280，屏幕宽度是720
             minPosX = -deltaSize;
             maxPosX = deltaSize;
         }

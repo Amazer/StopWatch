@@ -41,6 +41,23 @@ namespace StopWatch
         [SerializeField]
         private float overMaxDisX;
 
+        [SerializeField]
+        private float _pixelScaler = 0f;    // 由于分辨率的不同，需要进行横向移动距离的缩放，以得到实际UI应该移动的距离
+        private int screenWidth = 0;
+
+        private float pixelScaler
+        {
+            get
+            {
+                if(screenWidth!= Screen.width)
+                {
+                    screenWidth = Screen.width;
+                    _pixelScaler = 720f / screenWidth;
+                }
+                return _pixelScaler;
+            }
+        }
+
 
         private bool touched = false;
         private float refSpeed = 0f;
@@ -97,6 +114,7 @@ namespace StopWatch
             if (touched)
             {
                 float deltaX = (Input.mousePosition - lastMousePos).x;
+                deltaX *= pixelScaler;
                 lastMousePos = Input.mousePosition;
                 if (totalMoveX + deltaX < minDisTotalX)
                 {
