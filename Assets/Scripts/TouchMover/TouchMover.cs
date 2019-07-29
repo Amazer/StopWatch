@@ -45,11 +45,14 @@ namespace StopWatch
         private float _pixelScaler = 0f;    // 由于分辨率的不同，需要进行横向移动距离的缩放，以得到实际UI应该移动的距离
         private int screenWidth = 0;
 
+        private bool stopMove = false;
+        private float stopMoveX = 0f;
+
         private float pixelScaler
         {
             get
             {
-                if(screenWidth!= Screen.width)
+                if (screenWidth != Screen.width)
                 {
                     screenWidth = Screen.width;
                     _pixelScaler = 720f / screenWidth;
@@ -109,6 +112,8 @@ namespace StopWatch
             if (Input.GetMouseButtonUp(0))
             {
                 touched = false;
+                stopMove = false;
+                stopMoveX = 0;
             }
 
             if (touched)
@@ -132,6 +137,17 @@ namespace StopWatch
                 }
                 float newSpeed = deltaX / Time.deltaTime;
                 moveSpeed = Mathf.Lerp(moveSpeed, newSpeed, Time.deltaTime * 10);
+
+                if (totalMoveX < minDisX || totalMoveX > maxDisX)
+                {
+                    stopMove = true;
+                    stopMoveX += deltaX;
+                }
+                else
+                {
+                    stopMove = false;
+                    stopMoveX = 0;
+                }
             }
             else
             {
@@ -147,13 +163,24 @@ namespace StopWatch
                 totalMoveX += moveSpeed * Time.deltaTime;
                 if (totalMoveX < minDisX)
                 {
-                    totalMoveX = minDisX;
                     moveSpeed = 0f;
+                    //                    totalMoveX = minDisX;
+                    totalMoveX = Mathf.SmoothDamp(totalMoveX, minDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
                 }
                 else if (totalMoveX > maxDisX)
                 {
-                    totalMoveX = maxDisX;
                     moveSpeed = 0f;
+                    //                    totalMoveX = maxDisX;
+                    totalMoveX = Mathf.SmoothDamp(totalMoveX, maxDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
+                }
+            }
+            if(stopMove)
+            {
+                if(Mathf.Abs(stopMoveX)>300)
+                {
+                    touched = false;
+                    stopMove = false;
+                    stopMoveX = 0f;
                 }
             }
             if (Mathf.Abs(curMoveX - totalMoveX) > 0.0001f)
@@ -174,6 +201,8 @@ namespace StopWatch
             touched = false;
             refSpeed = 0;
             moveSpeed = 0;
+            stopMove = false;
+            stopMoveX = 0;
             for (int i = 0, imax = moveLayers.Length; i < imax; ++i)
             {
                 moveLayers[i].ResetToInit();
