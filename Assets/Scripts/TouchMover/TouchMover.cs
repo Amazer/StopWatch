@@ -179,10 +179,10 @@ namespace StopWatch
                             totalMoveX = maxDisX; 
                         }
                     }
-                    if (Mathf.Abs(refSpeed) < 1)
-                    {
-                        refSpeed = 0f;
-                    }
+//                    if (Mathf.Abs(refSpeed) < 1)
+//                    {
+//                        refSpeed = 0f;
+//                    }
 
                 }
                 else
