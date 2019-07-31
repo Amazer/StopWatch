@@ -19,6 +19,12 @@ namespace StopWatch
         public float elasticity = 0.2f;
         public float overStretch = 0.2f;
         public float decelerationRate = 0.135f;
+
+        public float delayScaler = 1f;
+
+        [SerializeField]
+        private bool bounce = false;
+
         private Vector3 lastMousePos;
 
         [SerializeField]
@@ -45,9 +51,6 @@ namespace StopWatch
         private float _pixelScaler = 0f;    // 由于分辨率的不同，需要进行横向移动距离的缩放，以得到实际UI应该移动的距离
         private int screenWidth = 0;
 
-        private bool stopMove = false;
-        private float stopMoveX = 0f;
-
         private float pixelScaler
         {
             get
@@ -63,7 +66,9 @@ namespace StopWatch
 
 
         private bool touched = false;
+        [SerializeField]
         private float refSpeed = 0f;
+        [SerializeField]
         private float moveSpeed = 0f;
 
 
@@ -112,75 +117,112 @@ namespace StopWatch
             if (Input.GetMouseButtonUp(0))
             {
                 touched = false;
-                stopMove = false;
-                stopMoveX = 0;
             }
 
             if (touched)
             {
                 float deltaX = (Input.mousePosition - lastMousePos).x;
-                deltaX *= pixelScaler;
+                deltaX = deltaX * pixelScaler * delayScaler;
                 lastMousePos = Input.mousePosition;
-                if (totalMoveX + deltaX < minDisTotalX)
+                float tmpMoveX = totalMoveX + deltaX;
+                if (tmpMoveX > maxDisX || tmpMoveX < minDisX)
+                {
+                    float tarTotalMoveX = totalMoveX + deltaX * 0.2f;
+                    deltaX = tarTotalMoveX - totalMoveX;
+                    totalMoveX = tarTotalMoveX;
+                    bounce = true;
+                }
+                else
+                {
+                    totalMoveX = tmpMoveX;
+                    bounce = false;
+                }
+
+                if (totalMoveX < minDisTotalX)
                 {
                     totalMoveX = minDisTotalX;
-                    deltaX = 0f;
+                    touched = false;
+                    bounce = true;
                 }
-                else if (totalMoveX + deltaX > maxDisTotalX)
+                else if (totalMoveX > maxDisTotalX)
                 {
                     totalMoveX = maxDisTotalX;
-                    deltaX = 0f;
+                    touched = false;
+                    bounce = true;
                 }
-                else
-                {
-                    totalMoveX += deltaX;
-                }
-                float newSpeed = deltaX / Time.deltaTime;
-                moveSpeed = Mathf.Lerp(moveSpeed, newSpeed, Time.deltaTime * 10);
 
-                if (totalMoveX < minDisX || totalMoveX > maxDisX)
-                {
-                    stopMove = true;
-                    stopMoveX += deltaX;
-                }
-                else
-                {
-                    stopMove = false;
-                    stopMoveX = 0;
-                }
+                float newSpeed = deltaX / Time.deltaTime;
+                moveSpeed = Mathf.Lerp(moveSpeed, newSpeed, Time.deltaTime * 5);
             }
             else
             {
-                moveSpeed = Mathf.SmoothDamp(moveSpeed, 0f, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
-                if (Mathf.Abs(moveSpeed) < 1)
+                if (bounce)
                 {
-                    moveSpeed = 0f;
+                    if (totalMoveX < minDisX)
+                    {
+                        moveSpeed = 0f;
+                        //                        totalMoveX = Mathf.SmoothDamp(totalMoveX, minDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
+                        totalMoveX = totalMoveX + 500 * Time.deltaTime; 
+                        if(totalMoveX>minDisX)
+                        {
+                            totalMoveX = minDisX; 
+                        }
+
+                    }
+                    else if (totalMoveX > maxDisX)
+                    {
+                        moveSpeed = 0f;
+//                        totalMoveX = Mathf.SmoothDamp(totalMoveX, maxDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
+                        totalMoveX = totalMoveX - 500 * Time.deltaTime; 
+                        if(totalMoveX<maxDisX)
+                        {
+                            totalMoveX = maxDisX; 
+                        }
+                    }
+                    if (Mathf.Abs(refSpeed) < 1)
+                    {
+                        refSpeed = 0f;
+                    }
+
                 }
-                if (Mathf.Abs(refSpeed) < 1)
+                else
                 {
-                    moveSpeed = 0f;
-                }
-                totalMoveX += moveSpeed * Time.deltaTime;
-                if (totalMoveX < minDisX)
-                {
-                    moveSpeed = 0f;
-                    //                    totalMoveX = minDisX;
-                    totalMoveX = Mathf.SmoothDamp(totalMoveX, minDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
-                }
-                else if (totalMoveX > maxDisX)
-                {
-                    moveSpeed = 0f;
-                    //                    totalMoveX = maxDisX;
-                    totalMoveX = Mathf.SmoothDamp(totalMoveX, maxDisX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
-                }
-            }
-            if(stopMove)
-            {
-                if(Mathf.Abs(stopMoveX)>300)
-                {
-                    touched = false;
-                    stopMove = false;
-                    stopMoveX = 0f;
+                    if (moveSpeed != 0f)
+                    {
+                        moveSpeed = moveSpeed * Mathf.Pow(decelerationRate, Time.deltaTime);
+                        if (Mathf.Abs(moveSpeed) < 50)
+                        {
+                            moveSpeed = 0f;
+                        }
+                        if (Mathf.Abs(refSpeed) < 1)
+                        {
+                            refSpeed = 0f;
+                        }
+                        float lastMoveX = totalMoveX;
+                        totalMoveX += moveSpeed * Time.deltaTime;
+                        if (totalMoveX < minDisTotalX)
+                        {
+                            moveSpeed = 0f;
+                            totalMoveX = minDisTotalX;
+                        }
+                        else if (totalMoveX > maxDisTotalX)
+                        {
+                            moveSpeed = 0f;
+                            totalMoveX = maxDisTotalX;
+                        }
+
+                        if (totalMoveX < minDisX || totalMoveX > maxDisX)
+                        {
+                            //                            totalMoveX = Mathf.SmoothDamp(lastMoveX, totalMoveX, ref refSpeed, elasticity, Mathf.Infinity, Time.deltaTime);
+                            totalMoveX = lastMoveX + moveSpeed * Time.deltaTime * 0.2f;
+                            moveSpeed *= 0.8f;
+                        }
+
+                        if (moveSpeed == 0f)
+                        {
+                            bounce = true;
+                        }
+                    }
                 }
             }
             if (Mathf.Abs(curMoveX - totalMoveX) > 0.0001f)
@@ -196,13 +238,12 @@ namespace StopWatch
 
         public void ResetToInit()
         {
+            bounce = false;
             totalMoveX = 0;
             curMoveX = 0;
             touched = false;
             refSpeed = 0;
             moveSpeed = 0;
-            stopMove = false;
-            stopMoveX = 0;
             for (int i = 0, imax = moveLayers.Length; i < imax; ++i)
             {
                 moveLayers[i].ResetToInit();

@@ -14,7 +14,7 @@ using UnityEngine.UI;
 using System.Collections;
 namespace StopWatch
 {
-    public class MoveLayer : MonoBehaviour 
+    public class MoveLayer : MonoBehaviour
     {
         public float speed;
         private float hw;
@@ -30,7 +30,7 @@ namespace StopWatch
         public void Awake()
         {
             rt = GetComponent<RectTransform>();
-            hw = rt.sizeDelta.x * 0.5f;
+            hw = rt.rect.width * 0.5f;
             posX = rt.localPosition.x;
             origPos = rt.localPosition;
             float deltaSize = hw - 360;// 假设UGUI设置的Resolution是720*1280，屏幕宽度是720
@@ -50,12 +50,12 @@ namespace StopWatch
         {
             Vector3 pos = rt.localPosition;
             float tarLen = tarX * speed;
-            pos.x += tarLen;
-            if(pos.x>maxPosX)
+            pos.x = posX + tarLen;
+            if (pos.x > maxPosX)
             {
                 pos.x = maxPosX;
             }
-            else if(pos.x < minPosX)
+            else if (pos.x < minPosX)
             {
                 pos.x = minPosX;
             }
